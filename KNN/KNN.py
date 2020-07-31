@@ -27,12 +27,46 @@ def txt2matrix(txtfile):
     for i, line in enumerate(content):
         linesplit = line.split('\t')
         matrix[i] = linesplit[0:-1]
-        label.append(int(linesplit[-1]))
+        label.append(linesplit[-1].strip())
 
     return matrix, label
 
+
+def autoNorm(dataset):
+    mn = dataset.min(0)
+    mx = dataset.max(0)
+    ranges = mx - mn
+    datasetNum = dataset.shape[0]
+
+    dataset = (dataset -np.tile(mn, (datasetNum, 1)))/np.tile(ranges, (datasetNum,1))
+
+    return dataset, mn, ranges
+
+def datingClassTest():
+    path = './KNN/dataset/datingTestSet.txt'
+    testRotio = 0.1
+
+    dataSet,label = txt2matrix(path)
+    dataNum = dataSet.shape[0]
+    randPerm = list(np.random.permutation(dataNum))
+    dataSet = dataSet[randPerm]
+    label = [label[i] for i in randPerm]
+
+    dataSet, mn, ranges = autoNorm(dataSet)
+
+    trainPos = (int)(dataNum*(1-testRotio))
+    trainDataset = dataSet[0:trainPos]
+    trainLabel = label[0:trainPos]
+    testDataset = dataSet[trainPos:]
+    testLabel = label[trainPos:]
+
+    trueNum = 0
+    for i,sample in enumerate(testDataset):
+        result = classify0(sample, trainDataset, trainLabel, 10)
+        if result == testLabel[i]:
+            trueNum = trueNum + 1
+    print('accuracy:'+str(trueNum/(dataNum-trainPos)))
+
+
 if __name__ == "__main__":
-    path = 'KNN/dataset/datingTestSet2.txt'
-    dataSet, label = txt2matrix(path)
-    r = classify0([0, 1, 2], dataSet, label, 10)
-    print(r)
+    datingClassTest()
